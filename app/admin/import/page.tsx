@@ -1,13 +1,11 @@
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getImportState, setImportStatus } from "@/lib/importers/scanner";
 import { retryStats, listFailed, clearFailed } from "@/lib/importers/retryQueue";
 import { importByUrl } from "@/lib/importers/manual";
 
 export const dynamic = "force-dynamic";
-
-const MANUAL_FLASH = "gp_manual_import";
 
 
 // Пресеты скорости импорта (как требует ТЗ: адаптивная стратегия)
