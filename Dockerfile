@@ -16,7 +16,7 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-### Рантайм
+### Рантайм Next.js (standalone)
 FROM base AS runner
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -34,3 +34,14 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 CMD ["node", "server.js"]
+
+### Рантайм воркера (cron-импорт)
+FROM base AS worker
+ENV NODE_ENV=production
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/lib ./lib
+COPY --from=builder /app/worker ./worker
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/package.json ./package.json
+CMD ["npx", "tsx", "worker/index.ts"]

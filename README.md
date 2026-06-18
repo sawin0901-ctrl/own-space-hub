@@ -1,128 +1,162 @@
-# Магазин цифровых товаров
+# GamePlaza.site — партнёрская витрина цифровых товаров
 
-Самодостаточный интернет-магазин цифровых товаров на Next.js. Полностью независим от внешних SaaS: всё работает в Docker Compose на любом Linux-сервере (Ubuntu 22.04+, Debian 12+, российские VPS).
+SEO-оптимизированный каталог-витрина с автоматическим импортом товаров из
+**Digiseller** и **Plati.market**. Сайт **не принимает платежи** — пользователь
+направляется на торговую площадку по партнёрской ссылке с параметром
+`ai=XXXXX` (или `partner_id=XXXXX`), а владелец сайта получает комиссию за
+продажу через партнёрскую программу.
 
 ## Стек
 
-- **Next.js 15** (App Router, standalone build)
+- **Next.js 15** (App Router, SSR, `output: "standalone"`)
 - **PostgreSQL 16** + **Prisma**
 - **Redis 7**
-- **Nginx** (reverse proxy) + **Let's Encrypt** (certbot)
-- **next-intl** (ru / en / uk / de)
-- **Docker Compose**
+- **Nginx** + **certbot** (HTTPS Let's Encrypt)
+- **node-cron** worker для автосинхронизации товаров
+- Локализация **ru / en / uk / de** через `next-intl`
+- Полностью **независим от Lovable** — Docker Compose, открытый исходный код,
+  работает на любом VPS в РФ или за рубежом.
 
-## Структура
+## Что есть
 
-```
-app/                  — Next.js App Router (страницы и API-роуты)
-  [locale]/           — локализованные страницы
-  api/health          — health-check (Postgres + Redis)
-  api/webhooks/...    — вебхуки платёжных систем
-lib/                  — Prisma, Redis, абстракция платежей
-messages/             — переводы (ru/en/uk/de)
-prisma/schema.prisma  — схема БД и миграции
-docker/nginx/         — конфиг Nginx
-scripts/              — backup/restore/letsencrypt
-docker-compose.yml
-Dockerfile
-.env.example
-```
+- Каталог с фильтрами (категория, платформа, издатель, регион), сортировкой,
+  пагинацией, поиском.
+- Карточка товара с галереей, описанием, рейтингом, отзывами и кнопкой
+  «Купить на торговой площадке» (открывает редирект-трекер с партнёрским
+  параметром).
+- Динамический `sitemap.xml`, `robots.txt`, JSON-LD `Product` для SEO.
+- Партнёрский редирект `/api/go/:productId` — пишет клик в `AffiliateClick`,
+  собирает партнёрскую ссылку через шаблон, делает 302.
+- Админка `/admin` (логин/пароль): дашборд, товары (скрыть/показать),
+  категории, аналитика (просмотры, клики, источники трафика), настройки
+  (`affiliateId`, источники, интервал, SEO).
+- Worker-сервис: каждые `SYNC_INTERVAL_MINUTES` (или значение из админки)
+  идёт в API Digiseller/Plati, делает upsert товаров.
+
+## Что НЕ реализуется (по требованиям)
+
+- Корзина, оформление заказа, выдача ключей, возвраты, эквайринг.
+- Никаких ЮKassa / СБП / Stripe / PayPal. Платежи целиком на стороне Plati/Digiseller.
 
 ## Установка
 
-### Требования
-- Docker 24+ и Docker Compose v2
-- Открытые порты 80 и 443 (для Nginx + Let's Encrypt)
+### 1. Подготовка сервера
 
-### Шаги
+Нужен Docker и Docker Compose v2.
 
 ```bash
-git clone <ваш-репозиторий> shop && cd shop
+git clone <ваш-github-репозиторий> gameplaza
+cd gameplaza
 cp .env.example .env
-# Отредактируйте .env: пароли БД, домен, ключи Digiseller
-docker compose build
-docker compose up -d
-# Применить миграции (выполняется автоматически при старте app,
-# но первый раз можно вручную):
-docker compose exec app npx prisma migrate deploy
+nano .env   # см. ниже
 ```
 
-Сайт будет доступен на `http://<ip-сервера>/`.
+### 2. Минимально необходимые переменные `.env`
 
-### HTTPS (Let's Encrypt)
+```
+POSTGRES_PASSWORD=...               # любой длинный пароль
+AUTH_SECRET=...                     # openssl rand -hex 32
+IP_HASH_SALT=...                    # любая случайная строка
+ADMIN_EMAIL=admin@gameplaza.site
+ADMIN_PASSWORD=...                  # пароль первого админа
+DEFAULT_AFFILIATE_ID=               # ваш ID партнёра (можно изменить в админке)
+NEXT_PUBLIC_SITE_URL=https://gameplaza.site
+
+# Хотя бы один источник:
+DIGISELLER_SELLER_ID=...
+DIGISELLER_API_KEY=...
+# и/или
+PLATI_SELLER_ID=...
+PLATI_API_KEY=...
+```
+
+### 3. Запуск
 
 ```bash
-DOMAIN=example.ru EMAIL=admin@example.ru ./scripts/init-letsencrypt.sh
-# затем раскомментируйте HTTPS-блок в docker/nginx/conf.d/app.conf
-docker compose restart nginx
+docker compose up -d --build
 ```
 
-Поддерживаются `.ru`-домены, IPv4 и IPv6 (если сервер сконфигурирован).
+Контейнер `app` сам выполнит миграции (`prisma migrate deploy`) и при
+пустой таблице `User` создаст администратора из `ADMIN_EMAIL/ADMIN_PASSWORD`.
+
+### 4. HTTPS
+
+После того как DNS указывает на сервер, выпустите сертификат:
+
+```bash
+./scripts/init-letsencrypt.sh gameplaza.site admin@gameplaza.site
+```
+
+После выпуска nginx начнёт отдавать сайт по 443.
+
+### 5. Первая синхронизация
+
+Войдите в админку (`/admin`), при необходимости поправьте партнёрский ID и
+шаблоны ссылок в разделе **Настройки**, затем на дашборде нажмите
+**Синхронизировать товары сейчас**. Дальше воркер будет делать это
+автоматически по интервалу.
+
+## Партнёрские ссылки
+
+Шаблон по умолчанию:
+
+- Plati: `{base}{sep}ai={affiliateId}`
+- Digiseller: `{base}{sep}partner_id={affiliateId}`
+
+Переменные:
+- `{base}` — оригинальный URL товара у площадки (`Product.affiliateUrl`).
+- `{sep}` — `?` или `&` в зависимости от того, есть ли уже параметры.
+- `{affiliateId}` — ваш партнёрский ID.
+
+Шаблоны меняются в админке без редеплоя.
 
 ## Обновление
 
 ```bash
-cd /path/to/shop
 git pull
-docker compose build app
-docker compose up -d app
-# Миграции применятся автоматически при запуске.
+docker compose up -d --build
 ```
 
-Откат — `git checkout <предыдущий-тег> && docker compose up -d --build app`.
+Миграции и пересборка standalone-бандла произойдут автоматически.
 
 ## Резервное копирование
 
-Бэкапятся БД, конфиги и загруженные файлы.
+`scripts/backup.sh` собирает дамп PostgreSQL, файлы `public/uploads/` и
+текущий `.env` + `docker-compose.yml` в один tar.gz, хранит 14 последних
+копий в `./backups/`.
 
-```bash
-./scripts/backup.sh
+Добавьте в `crontab -e`:
+
+```
+0 3 * * * cd /opt/gameplaza && ./scripts/backup.sh >> ./backups/backup.log 2>&1
 ```
 
-Автоматизация через cron (ежедневно в 03:30):
+Восстановление: `./scripts/restore.sh ./backups/<имя>.tar.gz`.
 
-```cron
-30 3 * * * cd /path/to/shop && ./scripts/backup.sh >> /var/log/shop-backup.log 2>&1
+## Структура
+
+```
+app/
+  [locale]/            публичные страницы (главная, каталог, товар, категория, поиск)
+  admin/               защищённая админка
+  api/go/[productId]/  партнёрский редирект-трекер
+  api/search/          JSON для автокомплита
+  api/health/          health-check (Postgres+Redis)
+  sitemap.xml, robots.txt
+components/            переиспользуемые UI компоненты
+lib/
+  prisma.ts, redis.ts  клиенты
+  auth.ts              JWT-сессия админа + первичная инициализация
+  settings.ts          key-value настройки (партнёрский ID, источники, SEO)
+  analytics.ts         трекинг просмотров/кликов
+  importers/           Digiseller / Plati + общий sync
+worker/                cron-сервис автосинхронизации
+prisma/schema.prisma   схема БД
+docker/nginx/          конфиги nginx
+scripts/               backup / restore / init-letsencrypt
 ```
 
-Восстановление БД:
+## Полная независимость
 
-```bash
-./scripts/restore.sh backups/db_YYYYMMDD_HHMMSS.sql.gz
-```
-
-## Платежи
-
-- **Digiseller** — реализован (создание счёта через `oplata.info`, вебхук с проверкой MD5-подписи в `app/api/webhooks/digiseller/route.ts`).
-- **ЮKassa**, **СБП**, **карты РФ** — добавляются как новые адаптеры в `lib/payments/` по интерфейсу `PaymentProvider`. Слот для секретов уже зарезервирован в `.env.example`.
-
-Чтобы добавить нового провайдера:
-1. Создайте `lib/payments/<name>.ts` с реализацией `PaymentProvider`.
-2. Зарегистрируйте его в `lib/payments/provider.ts`.
-3. Добавьте вебхук `app/api/webhooks/<name>/route.ts` с обязательной проверкой подписи.
-
-## Локализация
-
-Языки: `ru` (по умолчанию), `en`, `uk`, `de`. Файлы переводов — `messages/*.json`. Добавление нового языка:
-1. Создайте `messages/<code>.json`.
-2. Добавьте код в `locales` в `i18n.ts`.
-
-## Независимость
-
-Проект не использует:
-- API/SDK/хостинг Lovable
-- зарубежные SaaS как обязательные зависимости
-
-Все используемые технологии — open source. Аккаунт Lovable можно удалить — проект продолжит работать.
-
-## Передача проекта
-
-Артефакты:
-- Исходный код (этот репозиторий)
-- `docker-compose.yml`, `Dockerfile`
-- SQL-миграции (Prisma): `prisma/migrations/` создаётся командой `npx prisma migrate dev --name init`
-- Инструкции: установки, обновления, резервного копирования (этот README)
-
-## Лицензия
-
-MIT (или выберите свою).
+Проект не использует API/SDK/хостинг Lovable. После клонирования вы можете
+удалить аккаунт Lovable — код, БД, сайт, домен остаются у вас.
