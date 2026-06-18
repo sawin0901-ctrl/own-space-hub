@@ -1,36 +1,36 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { getCurrentUser, signIn, signOut } from "@/lib/auth";
 import "../globals.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLayout({
-  children,
-  searchParams,
-}: {
-  children: React.ReactNode;
-  searchParams?: Promise<{ error?: string }>;
-}) {
+const FLASH = "gp_login_err";
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
-  const sp = (await searchParams) ?? {};
-  const loginError = sp.error === "1";
 
   if (!user) {
+    const jar = await cookies();
+    const loginError = jar.get(FLASH)?.value === "1";
+    if (loginError) jar.delete(FLASH);
+
     async function doLogin(formData: FormData) {
       "use server";
       const email = String(formData.get("email") ?? "").trim().toLowerCase();
       const password = String(formData.get("password") ?? "");
+      let ok = false;
       try {
         const u = await signIn(email, password);
-        if (!u) redirect("/admin?error=1");
-      } catch (e: unknown) {
-        // redirect() throws — пробрасываем дальше
-        if (e && typeof e === "object" && "digest" in e && String((e as { digest?: string }).digest).startsWith("NEXT_REDIRECT")) {
-          throw e;
-        }
+        ok = !!u;
+      } catch (e) {
         console.error("[admin/login] failed", e);
-        redirect("/admin?error=1");
+      }
+      if (!ok) {
+        const c = await cookies();
+        c.set(FLASH, "1", { path: "/admin", maxAge: 30, httpOnly: true, sameSite: "lax" });
+        redirect("/admin");
       }
       redirect("/admin");
     }
