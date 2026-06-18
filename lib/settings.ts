@@ -35,9 +35,13 @@ const DEFAULTS: AppSettings = {
 const SETTINGS_KEY = "app";
 
 export async function getSettings(): Promise<AppSettings> {
-  const row = await prisma.setting.findUnique({ where: { key: SETTINGS_KEY } });
-  if (!row) return DEFAULTS;
-  return { ...DEFAULTS, ...(row.value as Partial<AppSettings>) } as AppSettings;
+  try {
+    const row = await prisma.setting.findUnique({ where: { key: SETTINGS_KEY } });
+    if (!row) return DEFAULTS;
+    return { ...DEFAULTS, ...(row.value as Partial<AppSettings>) } as AppSettings;
+  } catch {
+    return DEFAULTS;
+  }
 }
 
 export async function saveSettings(patch: Partial<AppSettings>): Promise<AppSettings> {
