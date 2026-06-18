@@ -5,22 +5,12 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-function getClient() {
-  if (global.__prisma) return global.__prisma;
-  const client = new PrismaClient({
+// Singleton — кешируем ВСЕГДА (в т.ч. в production),
+// иначе каждый запрос плодит новый PrismaClient и пул соединений.
+export const prisma: PrismaClient =
+  global.__prisma ??
+  new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
   });
-  if (process.env.NODE_ENV !== "production") global.__prisma = client;
-  return client;
-}
 
-export const prisma = new Proxy({} as PrismaClient, {
-  get(_target, prop) {
-    const client = getClient();
-    const value = client[prop as keyof PrismaClient];
-    if (typeof value === "function") {
-      return value.bind(client);
-    }
-    return value;
-  },
-});
+global.__prisma = prisma;
