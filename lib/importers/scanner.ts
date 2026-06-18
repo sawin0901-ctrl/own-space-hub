@@ -34,15 +34,15 @@ async function ensureCategory(name?: string) {
 async function upsertProduct(np: NormalizedProduct): Promise<"IMPORTED" | "UPDATED"> {
   const category = await ensureCategory(np.categoryName);
   const settings = await getSettings();
-  const affiliateUrl = buildAffiliateUrl(
-    np.affiliateUrl,
-    settings.affiliateId,
-    settings.sources.digiseller.urlTemplate,
-  );
+  const template = np.source === "PLATI"
+    ? settings.sources.plati.urlTemplate
+    : settings.sources.digiseller.urlTemplate;
+  const affiliateUrl = buildAffiliateUrl(np.affiliateUrl, settings.affiliateId, template);
   const existing = await prisma.product.findUnique({
     where: { source_externalId: { source: np.source, externalId: np.externalId } },
     select: { id: true },
   });
+
   const data = {
     title: np.title,
     description: np.description ?? "",
