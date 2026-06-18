@@ -4,10 +4,12 @@
 import { prisma } from "../prisma";
 import { fetchDigisellerById } from "./digiseller";
 import { getSettings, buildAffiliateUrl } from "../settings";
+import { enqueueRetry, popDue } from "./retryQueue";
 import type { NormalizedProduct } from "./types";
 import type { Source } from "@prisma/client";
 
 const SOURCE: Source = "DIGISELLER";
+
 
 function slugify(input: string, fallback: string): string {
   const map: Record<string, string> = {
@@ -182,6 +184,14 @@ export async function runScanner(): Promise<void> {
       else if (r.status === "ERROR") errors++;
     }
 
+    // Ошибки → в Redis retry-очередь (15м → 1ч → failed-журнал)
+    for (let i = 0; i < ids.length; i++) {
+      const r = results[i];
+      if (r.status === "ERROR") {
+        await enqueueRetry(ids[i], r.message, 0).catch((e) => console.error("[scanner] enqueueRetry failed", e));
+      }
+    }
+
     // Логируем только значимое (импорт/обновление/ошибки), чтобы не раздувать таблицу
     const filtered = logs.filter((l) => l.status === "IMPORTED" || l.status === "UPDATED" || l.status === "ERROR");
     if (filtered.length) await prisma.importLog.createMany({ data: filtered }).catch(() => {});
@@ -204,6 +214,31 @@ export async function runScanner(): Promise<void> {
     }
   }
 }
+
+/** Обработать готовые к повтору задачи из Redis-очереди.
+ *  Вызывается воркером в idle-цикле и между батчами сканера. */
+export async function processRetryQueue(limit = 10): Promise<number> {
+  const due = await popDue(limit).catch(() => []);
+  if (!due.length) return 0;
+  let handled = 0;
+  for (const item of due) {
+    const r = await processId(item.id);
+    handled++;
+    await prisma.importLog.create({
+      data: {
+        source: SOURCE,
+        externalId: String(item.id),
+        status: r.status === "IMPORTED" || r.status === "UPDATED" || r.status === "ERROR" ? r.status : "SKIPPED",
+        message: `retry #${item.attempt + 1}${r.message ? `: ${r.message}` : ""}`,
+      },
+    }).catch(() => {});
+    if (r.status === "ERROR") {
+      await enqueueRetry(item.id, r.message, item.attempt).catch(() => {});
+    }
+  }
+  return handled;
+}
+
 
 /** Ре-чек уже импортированных товаров: обновляет цену/наличие/картинки. */
 export async function recheckExisting(limit = 200): Promise<number> {
