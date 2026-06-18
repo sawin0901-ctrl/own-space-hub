@@ -1,15 +1,15 @@
 import bcrypt from "bcryptjs";
-import { SignJWT, jwtVerify, TextEncoder } from "jose";
+import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
 const COOKIE = "gp_session";
 const MAX_AGE_SEC = 60 * 60 * 24 * 7;
 
-function secret() {
+function getSecret() {
   const s = process.env.AUTH_SECRET;
   if (!s) throw new Error("AUTH_SECRET is not set");
-  return s;
+  return new TextEncoder().encode(s);
 }
 
 export async function hashPassword(plain: string) {
@@ -25,9 +25,10 @@ export async function signIn(email: string, password: string) {
   if (!user) return null;
   const ok = await verifyPassword(password, user.passwordHash);
   if (!ok) return null;
-  const token = jwt.sign({ sub: user.id, role: user.role }, secret(), {
-    expiresIn: MAX_AGE_SEC,
-  });
+  const token = await new SignJWT({ sub: user.id, role: user.role })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime(`${MAX_AGE_SEC}s`)
+    .sign(getSecret());
   const jar = await cookies();
   jar.set(COOKIE, token, {
     httpOnly: true,
@@ -49,8 +50,13 @@ export async function getCurrentUser() {
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const payload = jwt.verify(token, secret()) as { sub: string; role: string };
-    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    const { payload } = await jwtVerify(token, getSecret(), {
+      algorithms: ["HS256"],
+    });
+    if (!payload.sub) return null;
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub as string },
+    });
     return user;
   } catch {
     return null;
