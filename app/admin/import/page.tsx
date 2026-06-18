@@ -105,6 +105,10 @@ export default async function ImportPage() {
           <input type="number" name="delayMs" defaultValue={state.delayMs} min={0} />
         </div>
         <div className="form-row">
+          <label>Лимит импортов в сутки (0 = без лимита)</label>
+          <input type="number" name="dailyLimit" defaultValue={state.dailyLimit} min={0} />
+        </div>
+        <div className="form-row">
           <label>Период ре-чека существующих, часов</label>
           <input type="number" name="recheckHours" defaultValue={state.recheckHours} min={1} />
         </div>
