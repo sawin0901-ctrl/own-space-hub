@@ -13,7 +13,7 @@ services:
         condition: service_started
     expose:
       - "3000"
-    command: sh -c "npx prisma migrate deploy && node server.js"
+    command: sh -c "npx -y prisma@5.22.0 migrate deploy && node server.js"
     volumes:
       - uploads:/app/public/uploads
 
