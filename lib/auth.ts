@@ -71,14 +71,22 @@ export async function requireAdmin() {
   return user;
 }
 
-/** Создаёт первого администратора из переменных окружения, если таблица пуста. */
+/** Создаёт/обновляет администратора из переменных окружения. */
 export async function ensureInitialAdmin() {
   const email = process.env.ADMIN_EMAIL;
   const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password) return;
-  const count = await prisma.user.count();
-  if (count > 0) return;
+  if (!email || !password) {
+    console.warn("[auth] ADMIN_EMAIL/ADMIN_PASSWORD not set — skipping admin bootstrap");
+    return;
+  }
   const hash = await hashPassword(password);
-  await prisma.user.create({ data: { email, passwordHash: hash, role: "ADMIN" } });
-  console.log(`[auth] Initial admin created: ${email}`);
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (!existing) {
+    await prisma.user.create({ data: { email, passwordHash: hash, role: "ADMIN" } });
+    console.log(`[auth] ✅ Initial admin created: ${email}`);
+  } else {
+    // Поддерживаем пароль в актуальном состоянии с .env
+    await prisma.user.update({ where: { email }, data: { passwordHash: hash, role: "ADMIN" } });
+    console.log(`[auth] 🔑 Admin password synced from env: ${email}`);
+  }
 }
