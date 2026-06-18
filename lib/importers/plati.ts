@@ -1,8 +1,11 @@
 import type { NormalizedProduct, ProductImporter } from "./types";
+import { fetchDigisellerById } from "./digiseller";
 
-// Документация Plati: https://plati.market/dev/
-// Список товаров продавца: https://plati.market/api/seller/{sellerId}.json
-// Карточка товара: https://plati.market/api/products/{id}/goods_partner.asp
+// Plati.market — это витрина того же Digiseller. Карточка товара доступна по
+// общему публичному эндпоинту:
+//   GET https://api.digiseller.ru/api/products/{id}/data?currency=RUB&lang=ru-RU&format=json
+// (Старый путь /api/products/{id}/goods.json отдаёт 404 — его больше нет.)
+// Список товаров продавца на plati оставляем как было.
 
 const API_BASE = "https://plati.market/api";
 
@@ -20,18 +23,20 @@ export const platiImporter: ProductImporter = {
     if (!res.ok) throw new Error(`Plati ${res.status}: ${await res.text()}`);
     const data = await res.json();
     const items: any[] = data?.items ?? data?.products ?? [];
-    return items.map(mapPlati).filter(Boolean) as NormalizedProduct[];
+    return items
+      .map((p) => mapPlatiList(p))
+      .filter(Boolean) as NormalizedProduct[];
   },
 
   async fetchProduct(externalId: string) {
-    const res = await fetch(`${API_BASE}/products/${externalId}/goods.json`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return mapPlati(data);
+    const r = await fetchDigisellerById(Number(externalId));
+    if (r.kind !== "ok") return null;
+    // Source-маркер должен быть PLATI, всё остальное — как из digiseller.
+    return { ...r.product, source: "PLATI" } as NormalizedProduct;
   },
 };
 
-function mapPlati(p: any): NormalizedProduct | null {
+function mapPlatiList(p: any): NormalizedProduct | null {
   if (!p) return null;
   const id = String(p.id_goods ?? p.id ?? "");
   if (!id) return null;
