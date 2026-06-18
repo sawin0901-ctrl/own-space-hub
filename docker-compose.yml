@@ -1,0 +1,71 @@
+services:
+  app:
+    build: .
+    container_name: shop_app
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - "3000"
+    command: sh -c "npx prisma migrate deploy && node server.js"
+    volumes:
+      - uploads:/app/public/uploads
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: shop_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-shop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop}
+      POSTGRES_DB: ${POSTGRES_DB:-shop}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: shop_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: shop_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+      - certbot_webroot:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: shop_certbot
+    restart: unless-stopped
+    volumes:
+      - certbot_webroot:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h; done"
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:
+  certbot_webroot:
+  certbot_certs:
