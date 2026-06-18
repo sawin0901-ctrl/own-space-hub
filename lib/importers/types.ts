@@ -20,6 +20,8 @@ export type NormalizedProduct = {
   genres?: string[];
   categoryName?: string;
   affiliateUrl: string;
+  inStock?: boolean;
+  hasImage?: boolean;
 };
 
 export interface ProductImporter {

@@ -101,11 +101,31 @@ async function processId(id: number): Promise<{ status: "IMPORTED" | "UPDATED" |
     if (r.kind === "not_found") return { status: "NOT_FOUND" };
     if (r.kind === "blocked")   return { status: "SKIPPED", message: "seller blocked" };
     if (r.kind === "error")     return { status: "ERROR", message: r.message };
-    const status = await upsertProduct(r.product);
+
+    // Качество карточки: импортируем только рабочие
+    const p = r.product;
+    if (!p.hasImage) return { status: "SKIPPED", message: "no image" };
+    if (!p.inStock)  return { status: "SKIPPED", message: "out of stock" };
+    if (!(p.price > 0)) return { status: "SKIPPED", message: "no price" };
+    if (!p.title || /^Товар \d+$/.test(p.title)) return { status: "SKIPPED", message: "no title" };
+
+    const status = await upsertProduct(p);
     return { status };
   } catch (e: any) {
     return { status: "ERROR", message: e?.message ?? String(e) };
   }
+}
+
+/** Сколько успешных импортов за последние 24 часа. */
+async function importsLast24h(): Promise<number> {
+  const since = new Date(Date.now() - 24 * 3600_000);
+  return prisma.importLog.count({
+    where: {
+      source: SOURCE,
+      createdAt: { gte: since },
+      status: { in: ["IMPORTED", "UPDATED"] },
+    },
+  });
 }
 
 /** Один проход бесконечного цикла — возвращается, когда status != RUNNING или достигнут maxId. */
@@ -131,6 +151,16 @@ export async function runScanner(): Promise<void> {
       await setImportStatus("IDLE", { lastError: null });
       console.log(`[scanner] reached maxId=${state.maxId}`);
       return;
+    }
+
+    // Лимит импортов в сутки
+    if (state.dailyLimit > 0) {
+      const done = await importsLast24h();
+      if (done >= state.dailyLimit) {
+        console.log(`[scanner] daily limit reached: ${done}/${state.dailyLimit}, sleeping 10 min`);
+        await new Promise((r) => setTimeout(r, 10 * 60_000));
+        continue;
+      }
     }
 
     const batchStart = state.cursorId + 1;

@@ -145,9 +145,10 @@ model ImportState {
   startId         Int           @default(1)
   cursorId        Int           @default(0)   // последний проверенный ID
   maxId           Int?                         // null = бесконечно
-  concurrency     Int           @default(10)  // параллельных запросов
-  delayMs         Int           @default(100) // пауза между батчами
+  concurrency     Int           @default(1)   // параллельных запросов
+  delayMs         Int           @default(2000) // пауза между батчами
   recheckHours    Int           @default(24)  // период ре-чека существующих
+  dailyLimit      Int           @default(200) // максимум импортов за 24 часа (0 = без лимита)
   totalChecked    Int           @default(0)
   totalImported   Int           @default(0)
   totalSkipped    Int           @default(0)
