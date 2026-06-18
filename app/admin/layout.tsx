@@ -8,12 +8,22 @@ export const dynamic = "force-dynamic";
 
 const FLASH = "gp_login_err";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+  searchParams,
+}: {
+  children: React.ReactNode;
+  searchParams?: Promise<{ error?: string }> | { error?: string };
+}) {
   const user = await getCurrentUser();
 
   if (!user) {
+    const sp = searchParams ? await searchParams : undefined;
     const jar = await cookies();
-    const loginError = jar.get(FLASH)?.value === "1";
+    const loginError = sp?.error === "1" || jar.get(FLASH)?.value === "1";
+    if (jar.get(FLASH)?.value === "1") {
+      jar.delete(FLASH);
+    }
 
     async function doLogin(formData: FormData) {
       "use server";
@@ -27,9 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         console.error("[admin/login] failed", e);
       }
       if (!ok) {
-        const c = await cookies();
-        c.set(FLASH, "1", { path: "/admin", maxAge: 30, httpOnly: true, sameSite: "lax" });
-        redirect("/admin");
+        redirect("/admin?error=1");
       }
       redirect("/admin");
     }
@@ -40,13 +48,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <h1>Вход в админку</h1>
             {loginError && (
               <div style={{ background: "#3a1212", color: "#ffb4b4", padding: "10px 12px", borderRadius: 6, marginBottom: 12, fontSize: 14 }}>
-                Неверный email или пароль. Проверьте ADMIN_EMAIL / ADMIN_PASSWORD в .env и перезапустите контейнер.
+                Неверный логин или пароль
               </div>
             )}
             <form action={doLogin}>
               <div className="form-row">
                 <label>Email</label>
-                <input type="email" name="email" required autoComplete="username" />
+                <input type="email" name="email" required autoComplete="username" defaultValue="" />
               </div>
               <div className="form-row">
                 <label>Пароль</label>
@@ -59,6 +67,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </html>
     );
   }
+
 
   async function doSignOut() {
     "use server";
