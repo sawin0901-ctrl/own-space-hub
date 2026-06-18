@@ -5,16 +5,33 @@ import "../globals.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+  searchParams,
+}: {
+  children: React.ReactNode;
+  searchParams?: Promise<{ error?: string }>;
+}) {
   const user = await getCurrentUser();
+  const sp = (await searchParams) ?? {};
+  const loginError = sp.error === "1";
 
   if (!user) {
     async function doLogin(formData: FormData) {
       "use server";
-      const email = String(formData.get("email") ?? "");
+      const email = String(formData.get("email") ?? "").trim().toLowerCase();
       const password = String(formData.get("password") ?? "");
-      const u = await signIn(email, password);
-      if (!u) redirect("/admin?error=1");
+      try {
+        const u = await signIn(email, password);
+        if (!u) redirect("/admin?error=1");
+      } catch (e: unknown) {
+        // redirect() throws — пробрасываем дальше
+        if (e && typeof e === "object" && "digest" in e && String((e as { digest?: string }).digest).startsWith("NEXT_REDIRECT")) {
+          throw e;
+        }
+        console.error("[admin/login] failed", e);
+        redirect("/admin?error=1");
+      }
       redirect("/admin");
     }
     return (
@@ -22,14 +39,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <body>
           <div style={{ maxWidth: 380, margin: "80px auto", padding: 24, background: "var(--surface)", borderRadius: 10 }}>
             <h1>Вход в админку</h1>
+            {loginError && (
+              <div style={{ background: "#3a1212", color: "#ffb4b4", padding: "10px 12px", borderRadius: 6, marginBottom: 12, fontSize: 14 }}>
+                Неверный email или пароль. Проверьте ADMIN_EMAIL / ADMIN_PASSWORD в .env и перезапустите контейнер.
+              </div>
+            )}
             <form action={doLogin}>
               <div className="form-row">
                 <label>Email</label>
-                <input type="email" name="email" required />
+                <input type="email" name="email" required autoComplete="username" />
               </div>
               <div className="form-row">
                 <label>Пароль</label>
-                <input type="password" name="password" required />
+                <input type="password" name="password" required autoComplete="current-password" />
               </div>
               <button className="btn" type="submit">Войти</button>
             </form>
