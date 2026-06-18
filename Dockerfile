@@ -17,6 +17,7 @@ ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
 ENV REDIS_URL="redis://localhost:6379"
 ENV AUTH_SECRET="build-time-placeholder-secret"
 RUN bunx prisma generate
+RUN mkdir -p public
 RUN bun run build
 
 ### Рантайм Next.js (standalone)
