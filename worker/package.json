@@ -1,8 +1,0 @@
-{
-  "name": "gameplaza-worker",
-  "private": true,
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/worker/index.js"
-  }
-}
