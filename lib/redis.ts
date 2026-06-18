@@ -5,11 +5,23 @@ declare global {
   var __redis: Redis | undefined;
 }
 
-export const redis =
-  global.__redis ??
-  new Redis(process.env.REDIS_URL ?? "redis://redis:6379", {
+function getClient() {
+  if (global.__redis) return global.__redis;
+  const client = new Redis(process.env.REDIS_URL ?? "redis://redis:6379", {
     maxRetriesPerRequest: 3,
-    lazyConnect: false,
+    lazyConnect: true,
   });
+  if (process.env.NODE_ENV !== "production") global.__redis = client;
+  return client;
+}
 
-if (process.env.NODE_ENV !== "production") global.__redis = redis;
+export const redis = new Proxy({} as Redis, {
+  get(_target, prop) {
+    const client = getClient();
+    const value = client[prop as keyof Redis];
+    if (typeof value === "function") {
+      return value.bind(client);
+    }
+    return value;
+  },
+});

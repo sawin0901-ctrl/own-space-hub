@@ -13,20 +13,24 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
-  if (!product) return {};
-  const desc = (product.description ?? "").replace(/<[^>]+>/g, "").slice(0, 160);
-  return {
-    title: product.title,
-    description: desc || product.title,
-    openGraph: {
+  try {
+    const { slug } = await params;
+    const product = await prisma.product.findUnique({ where: { slug } });
+    if (!product) return {};
+    const desc = (product.description ?? "").replace(/<[^>]+>/g, "").slice(0, 160);
+    return {
       title: product.title,
-      description: desc,
-      images: product.image ? [product.image] : undefined,
-      type: "website",
-    },
-  };
+      description: desc || product.title,
+      openGraph: {
+        title: product.title,
+        description: desc,
+        images: product.image ? [product.image] : undefined,
+        type: "website",
+      },
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function ProductPage({

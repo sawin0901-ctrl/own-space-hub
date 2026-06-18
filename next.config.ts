@@ -7,8 +7,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  outputFileTracingRoot: process.cwd(),
   images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
-  serverExternalPackages: ["jsonwebtoken", "bcryptjs", "@prisma/client", "prisma"],
+  serverExternalPackages: ["bcryptjs", "@prisma/client", "prisma"],
 };
 
 export default withNextIntl(nextConfig);
