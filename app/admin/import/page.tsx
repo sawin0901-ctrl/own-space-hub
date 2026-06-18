@@ -34,6 +34,27 @@ export default async function ImportPage() {
     }),
   ]);
 
+  const jar = await cookies();
+  const flashRaw = jar.get(MANUAL_FLASH)?.value;
+  let manualFlash: { ok: boolean; message: string; slug?: string } | null = null;
+  if (flashRaw) {
+    try { manualFlash = JSON.parse(decodeURIComponent(flashRaw)); } catch { /* ignore */ }
+    jar.set(MANUAL_FLASH, "", { path: "/admin", maxAge: 0 });
+  }
+
+  async function manualImport(formData: FormData) {
+    "use server";
+    const url = String(formData.get("url") ?? "").trim();
+    const r = await importByUrl(url);
+    const flash = r.ok
+      ? { ok: true, message: `${r.action === "IMPORTED" ? "Добавлен" : "Обновлён"} (${r.source} #${r.externalId})`, slug: r.slug }
+      : { ok: false, message: r.error };
+    const c = await cookies();
+    c.set(MANUAL_FLASH, encodeURIComponent(JSON.stringify(flash)), { path: "/admin", maxAge: 30, httpOnly: true });
+    revalidatePath("/admin/import");
+  }
+
+
   async function start(formData: FormData) {
     "use server";
     const startId = Math.max(1, Number(formData.get("startId") ?? 1));
