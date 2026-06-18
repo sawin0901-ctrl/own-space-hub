@@ -127,7 +127,7 @@ export default async function ImportPage() {
           </tr>
         </thead>
         <tbody>
-          {recent.map((l) => (
+          {recent.map((l: typeof recent[number]) => (
             <tr key={l.id}>
               <td>{l.createdAt.toISOString().replace("T", " ").slice(0, 19)}</td>
               <td>{l.externalId}</td>

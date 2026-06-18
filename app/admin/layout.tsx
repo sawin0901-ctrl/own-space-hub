@@ -54,6 +54,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin">Дашборд</Link>
             <Link href="/admin/products">Товары</Link>
             <Link href="/admin/categories">Категории</Link>
+            <Link href="/admin/import">Автоимпорт</Link>
             <Link href="/admin/analytics">Аналитика</Link>
             <Link href="/admin/settings">Настройки</Link>
             <form action={doSignOut} style={{ marginTop: 24 }}>
