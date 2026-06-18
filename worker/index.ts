@@ -5,11 +5,13 @@
 // Курсор хранится в БД, поэтому после рестарта импорт продолжается с того же места.
 import { prisma } from "../lib/prisma";
 import { ensureInitialAdmin } from "../lib/auth";
-import { runScanner, recheckExisting, getImportState } from "../lib/importers/scanner";
+import { runScanner, recheckExisting, getImportState, processRetryQueue } from "../lib/importers/scanner";
 import { seedTaxonomy } from "../lib/seed/taxonomy";
 
 const RECHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 час
-const IDLE_POLL_MS = 10_000; // 10 сек — опрос статуса, если воркер ждёт команды "RUNNING"
+const RETRY_INTERVAL_MS = 60 * 1000;         // раз в минуту дренируем retry-очередь
+const IDLE_POLL_MS = 10_000;
+
 
 async function main() {
   console.log("[importer] starting");
@@ -20,6 +22,7 @@ async function main() {
   await getImportState();
 
   let lastRecheckAt = 0;
+  let lastRetryAt = 0;
 
   // Главный цикл: пока процесс жив — пытаемся работать
   while (true) {
@@ -34,6 +37,17 @@ async function main() {
         await sleep(IDLE_POLL_MS);
       }
 
+      // Дренаж retry-очереди (раз в минуту)
+      if (Date.now() - lastRetryAt > RETRY_INTERVAL_MS) {
+        lastRetryAt = Date.now();
+        try {
+          const n = await processRetryQueue(10);
+          if (n > 0) console.log(`[importer] processed ${n} retry tasks`);
+        } catch (e) {
+          console.error("[importer] retry queue failed", e);
+        }
+      }
+
       // Периодический ре-чек существующих товаров
       if (Date.now() - lastRecheckAt > RECHECK_INTERVAL_MS) {
         lastRecheckAt = Date.now();
@@ -44,6 +58,7 @@ async function main() {
           console.error("[importer] re-check failed", e);
         }
       }
+
     } catch (e: any) {
       console.error("[importer] loop error", e?.message ?? e);
       await prisma.importState.update({

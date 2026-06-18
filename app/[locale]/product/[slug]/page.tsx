@@ -45,6 +45,21 @@ export default async function ProductPage({
   });
   if (!product || !product.isActive) notFound();
 
+  // SEO-перелинковка: похожие товары той же категории
+  const related = product.categoryId
+    ? await prisma.product.findMany({
+        where: {
+          isActive: true,
+          categoryId: product.categoryId,
+          id: { not: product.id },
+        },
+        orderBy: [{ rating: "desc" }, { reviewsCount: "desc" }, { updatedAt: "desc" }],
+        take: 8,
+        select: { id: true, slug: true, title: true, price: true, currency: true, image: true, rating: true },
+      })
+    : [];
+
+
   const t = await getTranslations({ locale });
   const h = await headers();
   await trackView(product.id, h);
@@ -148,6 +163,32 @@ export default async function ProductPage({
           )}
         </div>
       </section>
+
+      {related.length > 0 && (
+        <section className="section">
+          <div className="container">
+            <h2>Похожие товары</h2>
+            <div className="product-grid">
+              {related.map((r) => (
+                <Link key={r.id} href={`${prefix}/product/${r.slug}`} className="product-card" prefetch={false}>
+                  {r.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={r.image} alt={r.title} loading="lazy" />
+                  ) : (
+                    <div className="card-img-fallback" />
+                  )}
+                  <div className="card-body">
+                    <h3 className="card-title">{r.title}</h3>
+                    <div className="card-price">{Number(r.price).toLocaleString("ru-RU")} ₽</div>
+                    {r.rating > 0 && <div className="card-rating muted">★ {r.rating.toFixed(1)}</div>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 }
+
