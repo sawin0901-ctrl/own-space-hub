@@ -25,7 +25,7 @@ export default async function HomePage({
   const t = await getTranslations({ locale });
   const prefix = locale === "ru" ? "" : `/${locale}`;
 
-  const [popular, fresh, deals, categories] = await Promise.all([
+  const [popular, fresh, deals, categories, genres] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true },
       orderBy: [{ reviewsCount: "desc" }, { rating: "desc" }],
@@ -41,7 +41,14 @@ export default async function HomePage({
       orderBy: { price: "asc" },
       take: 8,
     }),
-    prisma.category.findMany({ orderBy: { sortOrder: "asc" }, take: 6 }),
+    prisma.category.findMany({
+      where: { kind: "CATEGORY", parentId: null, isFeatured: true },
+      orderBy: { sortOrder: "asc" }, take: 9,
+    }),
+    prisma.category.findMany({
+      where: { kind: "GENRE", parentId: null, isFeatured: true },
+      orderBy: { sortOrder: "asc" }, take: 6,
+    }),
   ]);
 
   const featured = popular[0] ?? fresh[0];
@@ -154,11 +161,31 @@ export default async function HomePage({
               <Link href={`${prefix}/categories`}>{t("home.viewAll")} →</Link>
             </div>
             <div className="cat-grid">
-              {categories.map((c, i) => (
+              {categories.map((c) => (
                 <Link key={c.id} href={`${prefix}/category/${c.slug}`} className="cat-card">
-                  <div className="cat-icon">{CATEGORY_ICONS[i % CATEGORY_ICONS.length]}</div>
-                  <h3>{c.name}</h3>
-                  <div className="sub">Перейти к товарам</div>
+                  <div className="cat-card-icon">{c.icon ?? "📦"}</div>
+                  <h3 className="cat-card-title">{c.name}</h3>
+                  <div className="sub muted">Перейти →</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* GENRES */}
+      {genres.length > 0 && (
+        <section className="section reveal">
+          <div className="container">
+            <div className="section-head">
+              <h2>Популярные жанры</h2>
+              <Link href={`${prefix}/categories`}>{t("home.viewAll")} →</Link>
+            </div>
+            <div className="cat-grid">
+              {genres.map((g) => (
+                <Link key={g.id} href={`${prefix}/category/${g.slug}`} className="cat-card cat-card-genre">
+                  <div className="cat-card-icon">{g.icon ?? "🎮"}</div>
+                  <h3 className="cat-card-title">{g.name}</h3>
                 </Link>
               ))}
             </div>
