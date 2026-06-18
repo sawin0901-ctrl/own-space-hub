@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
-  // experimental.instrumentationHook включён по умолчанию в Next 15
+  serverExternalPackages: ["jsonwebtoken", "bcryptjs", "@prisma/client", "prisma"],
 };
 
 export default withNextIntl(nextConfig);
