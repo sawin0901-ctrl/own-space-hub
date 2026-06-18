@@ -14,7 +14,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) {
     const jar = await cookies();
     const loginError = jar.get(FLASH)?.value === "1";
-    if (loginError) jar.delete(FLASH);
 
     async function doLogin(formData: FormData) {
       "use server";
