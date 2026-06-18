@@ -8,21 +8,14 @@ export const dynamic = "force-dynamic";
 
 const FLASH = "gp_login_err";
 
-export default async function AdminLayout({
-  children,
-  searchParams,
-}: {
-  children: React.ReactNode;
-  searchParams?: Promise<{ error?: string }> | { error?: string };
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
 
   if (!user) {
-    const sp = searchParams ? await searchParams : undefined;
     const jar = await cookies();
-    const loginError = sp?.error === "1" || jar.get(FLASH)?.value === "1";
-    if (jar.get(FLASH)?.value === "1") {
-      jar.delete(FLASH);
+    const loginError = jar.get(FLASH)?.value === "1";
+    if (loginError) {
+      jar.set(FLASH, "", { path: "/admin", maxAge: 0 });
     }
 
     async function doLogin(formData: FormData) {
@@ -37,7 +30,9 @@ export default async function AdminLayout({
         console.error("[admin/login] failed", e);
       }
       if (!ok) {
-        redirect("/admin?error=1");
+        const c = await cookies();
+        c.set(FLASH, "1", { path: "/admin", maxAge: 30, httpOnly: true, sameSite: "lax" });
+        redirect("/admin");
       }
       redirect("/admin");
     }
@@ -54,7 +49,7 @@ export default async function AdminLayout({
             <form action={doLogin}>
               <div className="form-row">
                 <label>Email</label>
-                <input type="email" name="email" required autoComplete="username" defaultValue="" />
+                <input type="email" name="email" required autoComplete="username" />
               </div>
               <div className="form-row">
                 <label>Пароль</label>
@@ -67,6 +62,7 @@ export default async function AdminLayout({
       </html>
     );
   }
+
 
 
   async function doSignOut() {
