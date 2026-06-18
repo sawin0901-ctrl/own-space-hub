@@ -8,28 +8,34 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { getSettings } from "@/lib/settings";
 import "../globals.css";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
-  const settings = await getSettings();
-  const t = await getTranslations({ locale });
-  return {
-    title: { default: settings.seo.siteTitle, template: `%s — ${t("site.name")}` },
-    description: settings.seo.siteDescription,
-    openGraph: {
-      title: settings.seo.siteTitle,
+  try {
+    const { locale } = await params;
+    const settings = await getSettings();
+    const t = await getTranslations({ locale });
+    return {
+      title: { default: settings.seo.siteTitle, template: `%s — ${t("site.name")}` },
       description: settings.seo.siteDescription,
-      images: settings.seo.defaultOgImage ? [settings.seo.defaultOgImage] : undefined,
-      type: "website",
-      siteName: t("site.name"),
-    },
-    alternates: {
-      languages: Object.fromEntries(locales.map((l) => [l, l === "ru" ? "/" : `/${l}`])),
-    },
-  };
+      openGraph: {
+        title: settings.seo.siteTitle,
+        description: settings.seo.siteDescription,
+        images: settings.seo.defaultOgImage ? [settings.seo.defaultOgImage] : undefined,
+        type: "website",
+        siteName: t("site.name"),
+      },
+      alternates: {
+        languages: Object.fromEntries(locales.map((l) => [l, l === "ru" ? "/" : `/${l}`])),
+      },
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function LocaleLayout({

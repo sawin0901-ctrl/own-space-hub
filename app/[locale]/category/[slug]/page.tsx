@@ -10,13 +10,17 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
-  const c = await prisma.category.findUnique({ where: { slug } });
-  if (!c) return {};
-  return {
-    title: c.seoTitle ?? c.name,
-    description: c.seoDescription ?? `Каталог: ${c.name}`,
-  };
+  try {
+    const { slug } = await params;
+    const c = await prisma.category.findUnique({ where: { slug } });
+    if (!c) return {};
+    return {
+      title: c.seoTitle ?? c.name,
+      description: c.seoDescription ?? `Каталог: ${c.name}`,
+    };
+  } catch {
+    return {};
+  }
 }
 
 export default async function CategoryPage({
