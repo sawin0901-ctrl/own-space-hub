@@ -16,9 +16,10 @@ export default async function ImportPage() {
     const startId = Math.max(1, Number(formData.get("startId") ?? 1));
     const maxIdRaw = String(formData.get("maxId") ?? "").trim();
     const maxId = maxIdRaw === "" || maxIdRaw === "0" ? null : Number(maxIdRaw);
-    const concurrency = Math.min(50, Math.max(1, Number(formData.get("concurrency") ?? 10)));
-    const delayMs = Math.max(0, Number(formData.get("delayMs") ?? 100));
+    const concurrency = Math.min(50, Math.max(1, Number(formData.get("concurrency") ?? 1)));
+    const delayMs = Math.max(0, Number(formData.get("delayMs") ?? 2000));
     const recheckHours = Math.max(1, Number(formData.get("recheckHours") ?? 24));
+    const dailyLimit = Math.max(0, Number(formData.get("dailyLimit") ?? 200));
 
     await prisma.importState.update({
       where: { source: "DIGISELLER" },
@@ -29,6 +30,7 @@ export default async function ImportPage() {
         concurrency,
         delayMs,
         recheckHours,
+        dailyLimit,
         lastError: null,
       },
     });
