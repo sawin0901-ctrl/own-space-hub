@@ -14,6 +14,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!user) {
     const jar = await cookies();
     const loginError = jar.get(FLASH)?.value === "1";
+    if (loginError) {
+      jar.set(FLASH, "", { path: "/admin", maxAge: 0 });
+    }
 
     async function doLogin(formData: FormData) {
       "use server";
@@ -40,7 +43,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <h1>Вход в админку</h1>
             {loginError && (
               <div style={{ background: "#3a1212", color: "#ffb4b4", padding: "10px 12px", borderRadius: 6, marginBottom: 12, fontSize: 14 }}>
-                Неверный email или пароль. Проверьте ADMIN_EMAIL / ADMIN_PASSWORD в .env и перезапустите контейнер.
+                Неверный логин или пароль
               </div>
             )}
             <form action={doLogin}>
@@ -59,6 +62,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </html>
     );
   }
+
+
 
   async function doSignOut() {
     "use server";
