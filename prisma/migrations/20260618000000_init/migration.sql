@@ -64,14 +64,14 @@ CREATE TABLE IF NOT EXISTS "Review" (
   CONSTRAINT "Review_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "Setting" (
+CREATE TABLE IF NOT EXISTS "Setting" (
   "key" TEXT NOT NULL,
   "value" JSONB NOT NULL,
   "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "Setting_pkey" PRIMARY KEY ("key")
 );
 
-CREATE TABLE "ProductView" (
+CREATE TABLE IF NOT EXISTS "ProductView" (
   "id" TEXT NOT NULL,
   "productId" TEXT NOT NULL,
   "ipHash" TEXT,
@@ -81,7 +81,7 @@ CREATE TABLE "ProductView" (
   CONSTRAINT "ProductView_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "AffiliateClick" (
+CREATE TABLE IF NOT EXISTS "AffiliateClick" (
   "id" TEXT NOT NULL,
   "productId" TEXT NOT NULL,
   "ipHash" TEXT,
@@ -91,7 +91,7 @@ CREATE TABLE "AffiliateClick" (
   CONSTRAINT "AffiliateClick_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "User" (
+CREATE TABLE IF NOT EXISTS "User" (
   "id" TEXT NOT NULL,
   "email" TEXT NOT NULL,
   "passwordHash" TEXT NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE "User" (
   CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "ImportState" (
+CREATE TABLE IF NOT EXISTS "ImportState" (
   "id" TEXT NOT NULL,
   "source" "Source" NOT NULL,
   "status" "ImportStatus" NOT NULL DEFAULT 'IDLE',
@@ -122,7 +122,7 @@ CREATE TABLE "ImportState" (
   CONSTRAINT "ImportState_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "ImportLog" (
+CREATE TABLE IF NOT EXISTS "ImportLog" (
   "id" TEXT NOT NULL,
   "source" "Source" NOT NULL,
   "externalId" TEXT NOT NULL,
@@ -133,22 +133,22 @@ CREATE TABLE "ImportLog" (
   CONSTRAINT "ImportLog_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "Category_slug_key" ON "Category"("slug");
-CREATE UNIQUE INDEX "Product_slug_key" ON "Product"("slug");
-CREATE UNIQUE INDEX "Product_source_externalId_key" ON "Product"("source", "externalId");
-CREATE INDEX "Product_categoryId_idx" ON "Product"("categoryId");
-CREATE INDEX "Product_platform_idx" ON "Product"("platform");
-CREATE INDEX "Product_publisher_idx" ON "Product"("publisher");
-CREATE INDEX "Product_isActive_idx" ON "Product"("isActive");
-CREATE INDEX "Review_productId_idx" ON "Review"("productId");
-CREATE INDEX "ProductView_productId_idx" ON "ProductView"("productId");
-CREATE INDEX "ProductView_createdAt_idx" ON "ProductView"("createdAt");
-CREATE INDEX "AffiliateClick_productId_idx" ON "AffiliateClick"("productId");
-CREATE INDEX "AffiliateClick_createdAt_idx" ON "AffiliateClick"("createdAt");
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-CREATE UNIQUE INDEX "ImportState_source_key" ON "ImportState"("source");
-CREATE INDEX "ImportLog_source_createdAt_idx" ON "ImportLog"("source", "createdAt");
-CREATE INDEX "ImportLog_status_createdAt_idx" ON "ImportLog"("status", "createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "Category_slug_key" ON "Category"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "Product_slug_key" ON "Product"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "Product_source_externalId_key" ON "Product"("source", "externalId");
+CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId");
+CREATE INDEX IF NOT EXISTS "Product_platform_idx" ON "Product"("platform");
+CREATE INDEX IF NOT EXISTS "Product_publisher_idx" ON "Product"("publisher");
+CREATE INDEX IF NOT EXISTS "Product_isActive_idx" ON "Product"("isActive");
+CREATE INDEX IF NOT EXISTS "Review_productId_idx" ON "Review"("productId");
+CREATE INDEX IF NOT EXISTS "ProductView_productId_idx" ON "ProductView"("productId");
+CREATE INDEX IF NOT EXISTS "ProductView_createdAt_idx" ON "ProductView"("createdAt");
+CREATE INDEX IF NOT EXISTS "AffiliateClick_productId_idx" ON "AffiliateClick"("productId");
+CREATE INDEX IF NOT EXISTS "AffiliateClick_createdAt_idx" ON "AffiliateClick"("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "ImportState_source_key" ON "ImportState"("source");
+CREATE INDEX IF NOT EXISTS "ImportLog_source_createdAt_idx" ON "ImportLog"("source", "createdAt");
+CREATE INDEX IF NOT EXISTS "ImportLog_status_createdAt_idx" ON "ImportLog"("status", "createdAt");
 
 ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
