@@ -483,3 +483,57 @@ table.admin-table th { color: var(--muted); font-weight: 500; text-transform: up
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .stat-card .lbl { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+/* ===== Mega-menu ===== */
+.nav-trigger {
+  background: none; border: 0; color: inherit; font: inherit; cursor: pointer;
+  padding: 8px 4px; display: inline-flex; align-items: center; gap: 4px;
+  color: var(--muted); transition: color .2s;
+}
+.nav-trigger:hover, .nav-trigger[aria-expanded="true"] { color: var(--text); }
+.mega-menu {
+  position: absolute; left: 0; right: 0; top: 100%;
+  background: var(--surface); border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+  animation: megaIn .18s ease-out;
+  z-index: 100;
+}
+@keyframes megaIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.mega-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px; padding: 24px 0;
+}
+.mega-col .mega-title {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; color: var(--text); margin-bottom: 10px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border);
+}
+.mega-col .mega-title:hover { color: #a855f7; }
+.mega-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.mega-col a { color: var(--muted); font-size: 0.92rem; transition: color .15s, transform .15s; display: inline-block; }
+.mega-col a:hover { color: var(--text); transform: translateX(2px); }
+
+/* ===== Category grid ===== */
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; margin-top: 16px; }
+.cat-card-icon { font-size: 2.4rem; margin-bottom: 12px; }
+.cat-card-title { font-size: 1.15rem; margin: 0 0 10px; font-weight: 700; }
+.cat-card-subs { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+.cat-card-genre { background: linear-gradient(135deg, var(--surface), var(--surface-2)); }
+
+/* ===== Breadcrumbs ===== */
+.breadcrumbs { font-size: 0.88rem; color: var(--muted); margin: 16px 0 8px; }
+.breadcrumbs a { color: var(--muted); transition: color .15s; }
+.breadcrumbs a:hover { color: var(--text); }
+.breadcrumbs span { color: var(--text); }
+.page-title { margin: 18px 0 12px; font-family: var(--font-display); font-size: 2rem; }
+
+/* ===== Subcategory chips ===== */
+.subcat-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border);
+  font-size: 0.88rem; color: var(--text); transition: all .15s;
+}
+.chip:hover { background: var(--surface-2); border-color: var(--border-strong); transform: translateY(-1px); }

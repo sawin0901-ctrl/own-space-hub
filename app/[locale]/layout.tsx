@@ -6,6 +6,7 @@ import { locales, type Locale } from "@/i18n";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getSettings } from "@/lib/settings";
+import { getMegaMenu } from "@/lib/megaMenu";
 import "../globals.css";
 
 export const dynamic = "force-dynamic";
@@ -53,12 +54,13 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!locales.includes(locale as Locale)) notFound();
   const messages = await getMessages();
+  const mega = await getMegaMenu();
 
   return (
     <html lang={locale}>
       <body>
         <NextIntlClientProvider messages={messages}>
-          <SiteHeader />
+          <SiteHeader mega={mega} />
           <main>{children}</main>
           <SiteFooter />
         </NextIntlClientProvider>
