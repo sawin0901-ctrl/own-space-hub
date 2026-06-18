@@ -22,6 +22,7 @@ async function main() {
   await getImportState();
 
   let lastRecheckAt = 0;
+  let lastRetryAt = 0;
 
   // Главный цикл: пока процесс жив — пытаемся работать
   while (true) {
@@ -36,6 +37,17 @@ async function main() {
         await sleep(IDLE_POLL_MS);
       }
 
+      // Дренаж retry-очереди (раз в минуту)
+      if (Date.now() - lastRetryAt > RETRY_INTERVAL_MS) {
+        lastRetryAt = Date.now();
+        try {
+          const n = await processRetryQueue(10);
+          if (n > 0) console.log(`[importer] processed ${n} retry tasks`);
+        } catch (e) {
+          console.error("[importer] retry queue failed", e);
+        }
+      }
+
       // Периодический ре-чек существующих товаров
       if (Date.now() - lastRecheckAt > RECHECK_INTERVAL_MS) {
         lastRecheckAt = Date.now();
@@ -46,6 +58,7 @@ async function main() {
           console.error("[importer] re-check failed", e);
         }
       }
+
     } catch (e: any) {
       console.error("[importer] loop error", e?.message ?? e);
       await prisma.importState.update({
