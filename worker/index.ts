@@ -1,34 +1,63 @@
-// Standalone-воркер: cron-синхронизация товаров. Запускается отдельным процессом.
-import cron from "node-cron";
-import { runSync } from "../lib/importers/sync";
-import { getSettings } from "../lib/settings";
+// Standalone-воркер автоимпорта.
+// Один Docker-сервис (importer) запускает этот файл и крутится 24/7:
+//   1) если ImportState.status === RUNNING — продолжает бесконечный скан ID;
+//   2) каждый час делает ре-чек самых старых импортированных товаров.
+// Курсор хранится в БД, поэтому после рестарта импорт продолжается с того же места.
+import { prisma } from "../lib/prisma";
 import { ensureInitialAdmin } from "../lib/auth";
+import { runScanner, recheckExisting, getImportState } from "../lib/importers/scanner";
+
+const RECHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 час
+const IDLE_POLL_MS = 10_000; // 10 сек — опрос статуса, если воркер ждёт команды "RUNNING"
 
 async function main() {
-  console.log("[worker] starting");
-  await ensureInitialAdmin().catch((e) => console.error("[worker] admin init failed", e));
+  console.log("[importer] starting");
+  await ensureInitialAdmin().catch((e) => console.error("[importer] admin init failed", e));
 
-  const settings = await getSettings();
-  const interval = Math.max(5, settings.syncIntervalMinutes);
-  console.log(`[worker] sync interval = ${interval} min`);
+  // Гарантируем строку состояния
+  await getImportState();
 
-  // первый запуск через минуту после старта, чтобы дать БД подняться
-  setTimeout(() => runOnce(), 60_000);
+  let lastRecheckAt = 0;
 
-  cron.schedule(`*/${interval} * * * *`, runOnce);
-}
+  // Главный цикл: пока процесс жив — пытаемся работать
+  while (true) {
+    try {
+      const state = await getImportState();
 
-async function runOnce() {
-  console.log(`[worker] sync started at ${new Date().toISOString()}`);
-  try {
-    const res = await runSync();
-    console.log("[worker] sync done", res);
-  } catch (e) {
-    console.error("[worker] sync failed", e);
+      if (state.status === "RUNNING") {
+        // Один runScanner работает бесконечно, пока статус RUNNING
+        await runScanner();
+      } else {
+        // Ничего не делаем активно, ждём команду из админки
+        await sleep(IDLE_POLL_MS);
+      }
+
+      // Периодический ре-чек существующих товаров
+      if (Date.now() - lastRecheckAt > RECHECK_INTERVAL_MS) {
+        lastRecheckAt = Date.now();
+        try {
+          const n = await recheckExisting(200);
+          if (n > 0) console.log(`[importer] re-checked ${n} existing products`);
+        } catch (e) {
+          console.error("[importer] re-check failed", e);
+        }
+      }
+    } catch (e: any) {
+      console.error("[importer] loop error", e?.message ?? e);
+      await prisma.importState.update({
+        where: { source: "DIGISELLER" },
+        data: { status: "ERROR", lastError: String(e?.message ?? e) },
+      }).catch(() => {});
+      await sleep(15_000);
+    }
   }
 }
 
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 main().catch((e) => {
-  console.error("[worker] fatal", e);
+  console.error("[importer] fatal", e);
   process.exit(1);
 });
