@@ -1,9 +1,14 @@
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getImportState, setImportStatus } from "@/lib/importers/scanner";
 import { retryStats, listFailed, clearFailed } from "@/lib/importers/retryQueue";
+import { importByUrl } from "@/lib/importers/manual";
 
 export const dynamic = "force-dynamic";
+
+const MANUAL_FLASH = "gp_manual_import";
+
 
 // Пресеты скорости импорта (как требует ТЗ: адаптивная стратегия)
 const SPEED_PROFILES = {
@@ -28,6 +33,27 @@ export default async function ImportPage() {
       },
     }),
   ]);
+
+  const jar = await cookies();
+  const flashRaw = jar.get(MANUAL_FLASH)?.value;
+  let manualFlash: { ok: boolean; message: string; slug?: string } | null = null;
+  if (flashRaw) {
+    try { manualFlash = JSON.parse(decodeURIComponent(flashRaw)); } catch { /* ignore */ }
+    jar.set(MANUAL_FLASH, "", { path: "/admin", maxAge: 0 });
+  }
+
+  async function manualImport(formData: FormData) {
+    "use server";
+    const url = String(formData.get("url") ?? "").trim();
+    const r = await importByUrl(url);
+    const flash = r.ok
+      ? { ok: true, message: `${r.action === "IMPORTED" ? "Добавлен" : "Обновлён"} (${r.source} #${r.externalId})`, slug: r.slug }
+      : { ok: false, message: r.error };
+    const c = await cookies();
+    c.set(MANUAL_FLASH, encodeURIComponent(JSON.stringify(flash)), { path: "/admin", maxAge: 30, httpOnly: true });
+    revalidatePath("/admin/import");
+  }
+
 
   async function start(formData: FormData) {
     "use server";
@@ -101,7 +127,32 @@ export default async function ImportPage() {
         </div>
       )}
 
+      <h2 style={{ marginTop: 32 }}>Добавить товар вручную</h2>
+      <form action={manualImport} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <input
+          type="text"
+          name="url"
+          placeholder="https://plati.market/itm/5927800?ai=... или https://digiseller.ru/...id_d=12345"
+          required
+          style={{ flex: "1 1 480px", padding: 8 }}
+        />
+        <button className="btn" type="submit">＋ Импортировать</button>
+      </form>
+      {manualFlash && (
+        <div style={{
+          marginTop: 10, padding: "10px 12px", borderRadius: 6, fontSize: 14,
+          background: manualFlash.ok ? "#10331a" : "#3a1414",
+          color: manualFlash.ok ? "#b6f3c5" : "#ffb4b4",
+        }}>
+          {manualFlash.message}
+          {manualFlash.ok && manualFlash.slug && (
+            <> — <a href={`/product/${manualFlash.slug}`} target="_blank" rel="noreferrer">открыть страницу товара</a></>
+          )}
+        </div>
+      )}
+
       <h2 style={{ marginTop: 32 }}>Профиль скорости</h2>
+
       <form action={applyProfile} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
         <select name="profile" defaultValue="medium" className="form-row" style={{ padding: 8 }}>
           {Object.entries(SPEED_PROFILES).map(([k, v]) => (
