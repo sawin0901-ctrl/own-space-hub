@@ -5,14 +5,16 @@ import { ProductCard } from "@/components/ProductCard";
 
 export const dynamic = "force-dynamic";
 
-const FEATURES = [
-  { t: "Мгновенная доставка", d: "Ключ приходит сразу после оплаты — в любое время суток" },
-  { t: "Гарантия 24/7", d: "Замена или возврат, если что-то пошло не так" },
-  { t: "Официальные ключи", d: "Только лицензия от проверенных поставщиков" },
-  { t: "Любая оплата", d: "Карты, СБП, криптовалюта и электронные кошельки" },
-];
-
 const CATEGORY_ICONS = ["🎮", "⚡", "💎", "🧩", "🎁", "👤", "🛡️", "🚀", "🎯", "🔥", "💻", "📱"];
+
+const PLATFORMS = [
+  { name: "Steam", short: "ST", color: "linear-gradient(135deg,#1b2838,#2a475e)" },
+  { name: "Xbox", short: "XB", color: "linear-gradient(135deg,#107c10,#1ca31c)" },
+  { name: "PlayStation", short: "PS", color: "linear-gradient(135deg,#003791,#0070d1)" },
+  { name: "Nintendo", short: "NS", color: "linear-gradient(135deg,#e60012,#ff3a40)" },
+  { name: "EA App", short: "EA", color: "linear-gradient(135deg,#ff4747,#c70000)" },
+  { name: "Ubisoft", short: "UB", color: "linear-gradient(135deg,#0095ff,#005bbf)" },
+];
 
 export default async function HomePage({
   params,
@@ -23,7 +25,7 @@ export default async function HomePage({
   const t = await getTranslations({ locale });
   const prefix = locale === "ru" ? "" : `/${locale}`;
 
-  const [popular, fresh, categories] = await Promise.all([
+  const [popular, fresh, deals, categories] = await Promise.all([
     prisma.product.findMany({
       where: { isActive: true },
       orderBy: [{ reviewsCount: "desc" }, { rating: "desc" }],
@@ -34,6 +36,11 @@ export default async function HomePage({
       orderBy: { createdAt: "desc" },
       take: 8,
     }),
+    prisma.product.findMany({
+      where: { isActive: true },
+      orderBy: { price: "asc" },
+      take: 8,
+    }),
     prisma.category.findMany({ orderBy: { sortOrder: "asc" }, take: 6 }),
   ]);
 
@@ -42,7 +49,7 @@ export default async function HomePage({
   return (
     <>
       {/* HERO */}
-      <section className="hero">
+      <section className="hero reveal">
         <div className="container hero-inner">
           <div>
             <div className="hero-badge">
@@ -50,32 +57,30 @@ export default async function HomePage({
               Доставка ключа за 30 секунд
             </div>
             <h1>
-              Цифровые товары <span className="grad">без переплат</span>
+              Цифровые товары{" "}
+              <span className="grad">без переплат</span>
             </h1>
-            <p>
-              Игры, подписки, программы и внутриигровая валюта. Официальные ключи,
-              гарантия 24/7 и оплата любым удобным способом.
-            </p>
+            <p>{t("home.heroSub")}</p>
             <div className="hero-cta">
               <Link href={`${prefix}/catalog`} className="btn-primary">
-                Перейти в каталог
+                {t("home.heroCta")}
               </Link>
               <Link href={`${prefix}/categories`} className="btn-ghost">
-                Смотреть категории
+                {t("home.heroCta2")}
               </Link>
             </div>
             <div className="hero-stats">
               <div className="stat">
                 <div className="num">50k+</div>
-                <div className="lbl">покупок</div>
+                <div className="lbl">{t("home.stat1")}</div>
               </div>
               <div className="stat">
                 <div className="num">4.9 ★</div>
-                <div className="lbl">рейтинг</div>
+                <div className="lbl">{t("home.stat2")}</div>
               </div>
               <div className="stat">
                 <div className="num">24/7</div>
-                <div className="lbl">поддержка</div>
+                <div className="lbl">{t("home.stat3")}</div>
               </div>
             </div>
           </div>
@@ -117,20 +122,41 @@ export default async function HomePage({
         </div>
       </section>
 
+      {/* PLATFORMS */}
+      <section className="section reveal">
+        <div className="container">
+          <div className="section-head">
+            <h2>{t("home.platforms")}</h2>
+          </div>
+          <div className="platforms-grid">
+            {PLATFORMS.map((p) => (
+              <Link
+                key={p.name}
+                href={`${prefix}/catalog?platform=${encodeURIComponent(p.name)}`}
+                className="platform-card"
+              >
+                <div className="platform-badge" style={{ background: p.color }}>
+                  {p.short}
+                </div>
+                <span>{p.name}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CATEGORIES */}
       {categories.length > 0 && (
-        <section className="section">
+        <section className="section reveal">
           <div className="container">
             <div className="section-head">
               <h2>{t("home.browseCategories")}</h2>
-              <Link href={`${prefix}/categories`}>Все категории →</Link>
+              <Link href={`${prefix}/categories`}>{t("home.viewAll")} →</Link>
             </div>
             <div className="cat-grid">
               {categories.map((c, i) => (
                 <Link key={c.id} href={`${prefix}/category/${c.slug}`} className="cat-card">
-                  <div style={{ fontSize: "2rem", marginBottom: 14 }}>
-                    {CATEGORY_ICONS[i % CATEGORY_ICONS.length]}
-                  </div>
+                  <div className="cat-icon">{CATEGORY_ICONS[i % CATEGORY_ICONS.length]}</div>
                   <h3>{c.name}</h3>
                   <div className="sub">Перейти к товарам</div>
                 </Link>
@@ -142,11 +168,11 @@ export default async function HomePage({
 
       {/* POPULAR */}
       {popular.length > 0 && (
-        <section className="section">
+        <section className="section reveal">
           <div className="container">
             <div className="section-head">
               <h2>{t("home.popular")}</h2>
-              <Link href={`${prefix}/catalog?sort=popular`}>Все →</Link>
+              <Link href={`${prefix}/catalog?sort=popular`}>{t("home.viewAll")} →</Link>
             </div>
             <div className="grid">
               {popular.map((p) => <ProductCard key={p.id} product={p} />)}
@@ -155,13 +181,30 @@ export default async function HomePage({
         </section>
       )}
 
+      {/* DEALS */}
+      {deals.length > 0 && (
+        <section className="section reveal">
+          <div className="container">
+            <div className="section-head">
+              <h2>
+                <span className="grad">{t("home.deals")}</span>
+              </h2>
+              <Link href={`${prefix}/catalog?sort=price_asc`}>{t("home.viewAll")} →</Link>
+            </div>
+            <div className="grid">
+              {deals.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* FRESH */}
       {fresh.length > 0 && (
-        <section className="section">
+        <section className="section reveal">
           <div className="container">
             <div className="section-head">
               <h2>{t("home.fresh")}</h2>
-              <Link href={`${prefix}/catalog?sort=new`}>Все →</Link>
+              <Link href={`${prefix}/catalog?sort=new`}>{t("home.viewAll")} →</Link>
             </div>
             <div className="grid">
               {fresh.map((p) => <ProductCard key={p.id} product={p} />)}
@@ -171,15 +214,20 @@ export default async function HomePage({
       )}
 
       {/* FEATURES */}
-      <section className="section">
+      <section className="section reveal">
         <div className="container">
           <div className="section-head">
-            <h2>Почему GamePlaza</h2>
+            <h2>{t("home.features")}</h2>
           </div>
           <div className="features-grid">
-            {FEATURES.map((f, i) => (
-              <div key={f.t} className="feature">
-                <div className="num">0{i + 1}</div>
+            {[
+              { t: t("features.f1Title"), d: t("features.f1Desc"), icon: "🛡️" },
+              { t: t("features.f2Title"), d: t("features.f2Desc"), icon: "⚡" },
+              { t: t("features.f3Title"), d: t("features.f3Desc"), icon: "📦" },
+              { t: t("features.f4Title"), d: t("features.f4Desc"), icon: "💰" },
+            ].map((f, i) => (
+              <div key={i} className="feature">
+                <div className="feature-icon">{f.icon}</div>
                 <h3>{f.t}</h3>
                 <p>{f.d}</p>
               </div>
@@ -189,13 +237,13 @@ export default async function HomePage({
       </section>
 
       {/* CTA */}
-      <section className="section">
+      <section className="section reveal">
         <div className="container">
           <div className="cta">
-            <h2>Готов начать?</h2>
-            <p>Тысячи цифровых товаров по лучшим ценам. Выбирай и забирай прямо сейчас.</p>
+            <h2>{t("home.ctaTitle")}</h2>
+            <p>{t("home.ctaSub")}</p>
             <Link href={`${prefix}/catalog`} className="btn-primary">
-              Открыть каталог
+              {t("home.ctaBtn")}
             </Link>
           </div>
         </div>
