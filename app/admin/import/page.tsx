@@ -17,7 +17,12 @@ const SPEED_PROFILES = {
 } as const;
 type ProfileKey = keyof typeof SPEED_PROFILES;
 
-export default async function ImportPage() {
+export default async function ImportPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ mflash_ok?: string; mflash_msg?: string; mflash_slug?: string }>;
+}) {
+  const sp = (await searchParams) ?? {};
   const state = await getImportState();
   const [recent, retry, failed, importedToday] = await Promise.all([
     prisma.importLog.findMany({ orderBy: { createdAt: "desc" }, take: 50 }),
@@ -32,24 +37,33 @@ export default async function ImportPage() {
     }),
   ]);
 
-  const jar = await cookies();
-  const flashRaw = jar.get(MANUAL_FLASH)?.value;
-  let manualFlash: { ok: boolean; message: string; slug?: string } | null = null;
-  if (flashRaw) {
-    try { manualFlash = JSON.parse(decodeURIComponent(flashRaw)); } catch { /* ignore */ }
-    jar.set(MANUAL_FLASH, "", { path: "/admin", maxAge: 0 });
-  }
+  const manualFlash: { ok: boolean; message: string; slug?: string } | null =
+    sp.mflash_msg
+      ? {
+          ok: sp.mflash_ok === "1",
+          message: decodeURIComponent(sp.mflash_msg),
+          slug: sp.mflash_slug ? decodeURIComponent(sp.mflash_slug) : undefined,
+        }
+      : null;
 
   async function manualImport(formData: FormData) {
     "use server";
     const url = String(formData.get("url") ?? "").trim();
     const r = await importByUrl(url);
-    const flash = r.ok
-      ? { ok: true, message: `${r.action === "IMPORTED" ? "Добавлен" : "Обновлён"} (${r.source} #${r.externalId})`, slug: r.slug }
-      : { ok: false, message: r.error };
-    const c = await cookies();
-    c.set(MANUAL_FLASH, encodeURIComponent(JSON.stringify(flash)), { path: "/admin", maxAge: 30, httpOnly: true });
+    const params = new URLSearchParams();
+    if (r.ok) {
+      params.set("mflash_ok", "1");
+      params.set(
+        "mflash_msg",
+        encodeURIComponent(`${r.action === "IMPORTED" ? "Добавлен" : "Обновлён"} (${r.source} #${r.externalId})`),
+      );
+      if (r.slug) params.set("mflash_slug", encodeURIComponent(r.slug));
+    } else {
+      params.set("mflash_ok", "0");
+      params.set("mflash_msg", encodeURIComponent(r.error ?? "Ошибка импорта"));
+    }
     revalidatePath("/admin/import");
+    redirect(`/admin/import?${params.toString()}`);
   }
 
 
