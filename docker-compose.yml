@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-gameplaza}:${POSTGRES_PASSWORD:-gameplaza}@postgres:5432/${POSTGRES_DB:-gameplaza}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gameplaza}:${POSTGRES_PASSWORD:-gameplaza}@postgres:5432/${POSTGRES_DB:-gameplaza}?schema=public&connection_limit=5&pool_timeout=20
     depends_on:
       postgres:
         condition: service_healthy
@@ -15,7 +15,7 @@ services:
         condition: service_started
     expose:
       - "3000"
-    command: sh -c "npx -y prisma@5.22.0 migrate deploy && node server.js"
+    command: sh -c "npx -y prisma@5.22.0 migrate deploy && node scripts/bootstrap.mjs && node server.js"
     volumes:
       - uploads:/app/public/uploads
 
@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-gameplaza}:${POSTGRES_PASSWORD:-gameplaza}@postgres:5432/${POSTGRES_DB:-gameplaza}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-gameplaza}:${POSTGRES_PASSWORD:-gameplaza}@postgres:5432/${POSTGRES_DB:-gameplaza}?schema=public&connection_limit=5&pool_timeout=20
     depends_on:
       postgres:
         condition: service_healthy
