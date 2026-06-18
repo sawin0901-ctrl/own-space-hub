@@ -8,5 +8,6 @@ export default createMiddleware({
 });
 
 export const config = {
-  matcher: ["/((?!api|_next|.*\\..*).*)"],
+  // Не трогаем api, _next, admin и файлы с расширениями.
+  matcher: ["/((?!api|_next|admin|sitemap.xml|robots.txt|.*\\..*).*)"],
 };
