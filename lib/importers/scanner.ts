@@ -153,6 +153,16 @@ export async function runScanner(): Promise<void> {
       return;
     }
 
+    // Лимит импортов в сутки
+    if (state.dailyLimit > 0) {
+      const done = await importsLast24h();
+      if (done >= state.dailyLimit) {
+        console.log(`[scanner] daily limit reached: ${done}/${state.dailyLimit}, sleeping 10 min`);
+        await new Promise((r) => setTimeout(r, 10 * 60_000));
+        continue;
+      }
+    }
+
     const batchStart = state.cursorId + 1;
     const ids = Array.from({ length: state.concurrency }, (_, i) => batchStart + i);
 
