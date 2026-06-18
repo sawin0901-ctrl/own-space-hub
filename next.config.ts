@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  outputFileTracingRoot: process.cwd(),
   images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
   serverExternalPackages: ["bcryptjs", "@prisma/client", "prisma"],
 };
