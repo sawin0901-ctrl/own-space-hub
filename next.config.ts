@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: { remotePatterns: [{ protocol: "https", hostname: "**" }] },
   serverExternalPackages: ["jsonwebtoken", "bcryptjs", "@prisma/client", "prisma"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals.push("jsonwebtoken", "jws", "jwa", "bcryptjs");
+    }
+    return config;
+  },
 };
 
 export default withNextIntl(nextConfig);
