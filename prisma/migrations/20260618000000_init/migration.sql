@@ -1,13 +1,13 @@
 -- Initial GamePlaza schema for Docker/VPS deployments.
 -- Safe for fresh databases; existing deployments keep using applied migrations history.
 
-CREATE TYPE "Source" AS ENUM ('DIGISELLER', 'PLATI');
-CREATE TYPE "Role" AS ENUM ('ADMIN');
-CREATE TYPE "ImportStatus" AS ENUM ('IDLE', 'RUNNING', 'PAUSED', 'ERROR');
-CREATE TYPE "ImportItemStatus" AS ENUM ('IMPORTED', 'UPDATED', 'SKIPPED', 'NOT_FOUND', 'ERROR');
-CREATE TYPE "CategoryKind" AS ENUM ('CATEGORY', 'GENRE');
+DO $$ BEGIN CREATE TYPE "Source" AS ENUM ('DIGISELLER', 'PLATI'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE "Role" AS ENUM ('ADMIN'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE "ImportStatus" AS ENUM ('IDLE', 'RUNNING', 'PAUSED', 'ERROR'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE "ImportItemStatus" AS ENUM ('IMPORTED', 'UPDATED', 'SKIPPED', 'NOT_FOUND', 'ERROR'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE "CategoryKind" AS ENUM ('CATEGORY', 'GENRE'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TABLE "Category" (
+CREATE TABLE IF NOT EXISTS "Category" (
   "id" TEXT NOT NULL,
   "slug" TEXT NOT NULL,
   "name" TEXT NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE "Category" (
   CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "Product" (
+CREATE TABLE IF NOT EXISTS "Product" (
   "id" TEXT NOT NULL,
   "source" "Source" NOT NULL,
   "externalId" TEXT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE "Product" (
   CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
 
-CREATE TABLE "Review" (
+CREATE TABLE IF NOT EXISTS "Review" (
   "id" TEXT NOT NULL,
   "productId" TEXT NOT NULL,
   "author" TEXT NOT NULL,
