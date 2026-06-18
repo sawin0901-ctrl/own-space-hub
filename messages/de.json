@@ -1,6 +1,9 @@
 {
-  "home": {
-    "title": "Shop für digitale Waren",
-    "subtitle": "Infrastruktur-Gerüst ist bereit. Fügen Sie Katalog, Warenkorb und Checkout hinzu."
-  }
+  "site": { "name": "GamePlaza.site", "tagline": "Katalog digitaler Spiele & Aktivierungsschlüssel" },
+  "nav": { "home": "Startseite", "catalog": "Katalog", "categories": "Kategorien", "search": "Suche", "admin": "Admin" },
+  "home": { "hero": "Beste Preise für digitale Spiele und Schlüssel", "heroSub": "Katalog geprüfter Verkäufer. Kauf erfolgt auf dem Marktplatz.", "popular": "Beliebt", "fresh": "Neu", "browseCategories": "Kategorien" },
+  "catalog": { "title": "Katalog", "filters": "Filter", "platform": "Plattform", "publisher": "Publisher", "region": "Region", "sort": "Sortierung", "sortPopular": "Beliebt", "sortPriceAsc": "Preis: aufsteigend", "sortPriceDesc": "Preis: absteigend", "sortRating": "Bewertung", "sortNew": "Neueste", "empty": "Keine Produkte gefunden", "reset": "Filter zurücksetzen" },
+  "product": { "buy": "Auf dem Marktplatz kaufen", "rating": "Bewertung", "reviews": "Rezensionen", "seller": "Verkäufer", "platform": "Plattform", "publisher": "Publisher", "region": "Region", "description": "Beschreibung", "noReviews": "Noch keine Bewertungen", "disclaimer": "GamePlaza.site verkauft keine Produkte direkt. Alle Käufe erfolgen auf dem Marktplatz." },
+  "search": { "placeholder": "Spiel oder Schlüssel finden…", "submit": "Suchen", "resultsFor": "Ergebnisse für" },
+  "footer": { "about": "GamePlaza.site — Affiliate-Schaufenster für digitale Waren.", "rights": "Alle Rechte vorbehalten." }
 }
