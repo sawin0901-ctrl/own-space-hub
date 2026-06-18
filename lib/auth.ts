@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { SignJWT, jwtVerify, TextEncoder } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
