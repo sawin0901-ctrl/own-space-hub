@@ -1,23 +1,28 @@
-### Базовый образ
-FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat openssl
+### Базовый образ (Bun + Node для Prisma/Next runtime)
+FROM oven/bun:1.1-alpine AS base
+RUN apk add --no-cache libc6-compat openssl nodejs npm
 WORKDIR /app
 
 ### Установка зависимостей
 FROM base AS deps
-COPY package.json package-lock.json* ./
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile || bun install
 
 ### Сборка
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
+ENV REDIS_URL="redis://localhost:6379"
+ENV AUTH_SECRET="build-time-placeholder-secret"
+RUN bunx prisma generate
+RUN bun run build
 
 ### Рантайм Next.js (standalone)
-FROM base AS runner
+FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat openssl
+WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
@@ -44,4 +49,4 @@ COPY --from=builder /app/lib ./lib
 COPY --from=builder /app/worker ./worker
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/package.json ./package.json
-CMD ["npx", "tsx", "worker/index.ts"]
+CMD ["bunx", "tsx", "worker/index.ts"]
