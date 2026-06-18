@@ -6,6 +6,7 @@
 import { prisma } from "../lib/prisma";
 import { ensureInitialAdmin } from "../lib/auth";
 import { runScanner, recheckExisting, getImportState } from "../lib/importers/scanner";
+import { seedTaxonomy } from "../lib/seed/taxonomy";
 
 const RECHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 час
 const IDLE_POLL_MS = 10_000; // 10 сек — опрос статуса, если воркер ждёт команды "RUNNING"
@@ -13,6 +14,7 @@ const IDLE_POLL_MS = 10_000; // 10 сек — опрос статуса, есл�
 async function main() {
   console.log("[importer] starting");
   await ensureInitialAdmin().catch((e) => console.error("[importer] admin init failed", e));
+  await seedTaxonomy().catch((e) => console.error("[importer] seed failed", e));
 
   // Гарантируем строку состояния
   await getImportState();
