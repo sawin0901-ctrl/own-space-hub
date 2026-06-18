@@ -2,23 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { redis } from "@/lib/redis";
 
-export const dynamic = "force-dynamic";
-
 export async function GET() {
-  const result: Record<string, string> = { status: "ok" };
+  const checks: Record<string, string> = {};
   try {
     await prisma.$queryRaw`SELECT 1`;
-    result.postgres = "ok";
-  } catch {
-    result.postgres = "down";
-    result.status = "degraded";
+    checks.db = "ok";
+  } catch (e: any) {
+    checks.db = `error: ${e?.message ?? e}`;
   }
   try {
-    await redis.ping();
-    result.redis = "ok";
-  } catch {
-    result.redis = "down";
-    result.status = "degraded";
+    const pong = await redis.ping();
+    checks.redis = pong === "PONG" ? "ok" : pong;
+  } catch (e: any) {
+    checks.redis = `error: ${e?.message ?? e}`;
   }
-  return NextResponse.json(result);
+  const ok = Object.values(checks).every((v) => v === "ok");
+  return NextResponse.json({ ok, checks }, { status: ok ? 200 : 503 });
 }

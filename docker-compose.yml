@@ -1,7 +1,9 @@
 services:
   app:
-    build: .
-    container_name: shop_app
+    build:
+      context: .
+      target: runner
+    container_name: gameplaza_app
     restart: unless-stopped
     env_file: .env
     depends_on:
@@ -15,25 +17,38 @@ services:
     volumes:
       - uploads:/app/public/uploads
 
+  worker:
+    build:
+      context: .
+      target: worker
+    container_name: gameplaza_worker
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app:
+        condition: service_started
+
   postgres:
     image: postgres:16-alpine
-    container_name: shop_postgres
+    container_name: gameplaza_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-shop}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shop}
-      POSTGRES_DB: ${POSTGRES_DB:-shop}
+      POSTGRES_USER: ${POSTGRES_USER:-gameplaza}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gameplaza}
+      POSTGRES_DB: ${POSTGRES_DB:-gameplaza}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-shop}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gameplaza}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: shop_redis
+    container_name: gameplaza_redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -41,7 +56,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: shop_nginx
+    container_name: gameplaza_nginx
     restart: unless-stopped
     depends_on:
       - app
@@ -56,7 +71,7 @@ services:
 
   certbot:
     image: certbot/certbot:latest
-    container_name: shop_certbot
+    container_name: gameplaza_certbot
     restart: unless-stopped
     volumes:
       - certbot_webroot:/var/www/certbot
