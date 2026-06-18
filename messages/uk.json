@@ -1,9 +1,9 @@
 {
-  "site": { "name": "GamePlaza.site", "tagline": "Каталог цифрових ігор та ключів активації" },
-  "nav": { "home": "Головна", "catalog": "Каталог", "categories": "Категорії", "search": "Пошук", "admin": "Адмінка" },
-  "home": { "hero": "Найкращі ціни на цифрові ігри та ключі", "heroSub": "Каталог перевірених продавців. Покупка — на торговому майданчику.", "popular": "Популярне", "fresh": "Новинки", "browseCategories": "Категорії" },
-  "catalog": { "title": "Каталог", "filters": "Фільтри", "platform": "Платформа", "publisher": "Видавець", "region": "Регіон", "sort": "Сортування", "sortPopular": "Популярні", "sortPriceAsc": "Ціна: за зростанням", "sortPriceDesc": "Ціна: за спаданням", "sortRating": "Рейтинг", "sortNew": "Нові", "empty": "Товарів не знайдено", "reset": "Скинути фільтри" },
-  "product": { "buy": "Купити на торговому майданчику", "rating": "Рейтинг", "reviews": "Відгуки", "seller": "Продавець", "platform": "Платформа", "publisher": "Видавець", "region": "Регіон", "description": "Опис", "noReviews": "Поки немає відгуків", "disclaimer": "GamePlaza.site не продає товари безпосередньо. Усі покупки відбуваються на боці торгового майданчика." },
-  "search": { "placeholder": "Знайти гру або ключ…", "submit": "Знайти", "resultsFor": "Результати за запитом" },
-  "footer": { "about": "GamePlaza.site — партнерська вітрина цифрових товарів.", "rights": "Усі права захищені." }
+  "site": { "name": "GamePlaza.site", "tagline": "Digital games & activation keys catalog" },
+  "nav": { "home": "Home", "catalog": "Catalog", "categories": "Categories", "search": "Search", "admin": "Admin" },
+  "home": { "hero": "Best prices on digital games and keys", "heroSub": "Catalog of trusted sellers. Purchases happen on the marketplace.", "popular": "Popular", "fresh": "New arrivals", "browseCategories": "Categories" },
+  "catalog": { "title": "Catalog", "filters": "Filters", "platform": "Platform", "publisher": "Publisher", "region": "Region", "sort": "Sort", "sortPopular": "Popular", "sortPriceAsc": "Price: low to high", "sortPriceDesc": "Price: high to low", "sortRating": "Rating", "sortNew": "Newest", "empty": "No products found", "reset": "Reset filters" },
+  "product": { "buy": "Buy on marketplace", "rating": "Rating", "reviews": "Reviews", "seller": "Seller", "platform": "Platform", "publisher": "Publisher", "region": "Region", "description": "Description", "noReviews": "No reviews yet", "disclaimer": "GamePlaza.site does not sell products directly. Purchases happen on the marketplace side." },
+  "search": { "placeholder": "Find a game or key…", "submit": "Search", "resultsFor": "Results for" },
+  "footer": { "about": "GamePlaza.site — affiliate showcase of digital goods.", "rights": "All rights reserved." }
 }
