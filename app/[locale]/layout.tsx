@@ -9,6 +9,11 @@ import { getSettings } from "@/lib/settings";
 import "../globals.css";
 
 export const dynamic = "force-dynamic";
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({
   params,
