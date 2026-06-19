@@ -17,17 +17,13 @@ export default async function ResetPasswordPage({
 
   if (ok) {
     return (
-      <html lang="ru">
-        <body>
-          <div style={{ maxWidth: 420, margin: "80px auto", padding: 24, background: "var(--surface)", borderRadius: 10 }}>
-            <h1>Пароль обновлён</h1>
-            <p className="muted">Теперь можно войти с новым паролем.</p>
-            <p style={{ marginTop: 16 }}>
-              <Link href="/admin" className="btn">Войти</Link>
-            </p>
-          </div>
-        </body>
-      </html>
+      <div style={{ maxWidth: 420, margin: "80px auto", padding: 24, background: "var(--surface)", borderRadius: 10 }}>
+        <h1>Пароль обновлён</h1>
+        <p className="muted">Теперь можно войти с новым паролем.</p>
+        <p style={{ marginTop: 16 }}>
+          <Link href="/admin" className="btn">Войти</Link>
+        </p>
+      </div>
     );
   }
 
@@ -45,44 +41,40 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <html lang="ru">
-      <body>
-        <div style={{ maxWidth: 420, margin: "80px auto", padding: 24, background: "var(--surface)", borderRadius: 10 }}>
-          <h1>Новый пароль</h1>
-          {!user ? (
-            <>
-              <div style={{ background: "#3a1212", color: "#ffb4b4", padding: 12, borderRadius: 6, fontSize: 14 }}>
-                Ссылка недействительна или истекла. Запросите сброс заново.
-              </div>
-              <p style={{ marginTop: 16 }}>
-                <Link href="/forgot-password" style={{ color: "var(--accent)" }}>← Запросить новую ссылку</Link>
-              </p>
-            </>
-          ) : (
-            <>
-              {err && (
-                <div style={{ background: "#3a1212", color: "#ffb4b4", padding: 10, borderRadius: 6, marginBottom: 12, fontSize: 14 }}>
-                  {err === "mismatch" && "Пароли не совпадают"}
-                  {err === "weak_password" && "Пароль должен быть не короче 8 символов"}
-                  {err === "invalid_or_expired" && "Ссылка недействительна или истекла"}
-                </div>
-              )}
-              <form action={submit}>
-                <input type="hidden" name="token" value={token} />
-                <div className="form-row">
-                  <label>Новый пароль (мин. 8 символов)</label>
-                  <input type="password" name="password" required minLength={8} autoComplete="new-password" />
-                </div>
-                <div className="form-row">
-                  <label>Повторите пароль</label>
-                  <input type="password" name="password2" required minLength={8} autoComplete="new-password" />
-                </div>
-                <button className="btn" type="submit">Сохранить</button>
-              </form>
-            </>
+    <div style={{ maxWidth: 420, margin: "80px auto", padding: 24, background: "var(--surface)", borderRadius: 10 }}>
+      <h1>Новый пароль</h1>
+      {!user ? (
+        <>
+          <div style={{ background: "#3a1212", color: "#ffb4b4", padding: 12, borderRadius: 6, fontSize: 14 }}>
+            Ссылка недействительна или истекла. Запросите сброс заново.
+          </div>
+          <p style={{ marginTop: 16 }}>
+            <Link href="/forgot-password" style={{ color: "var(--accent)" }}>← Запросить новую ссылку</Link>
+          </p>
+        </>
+      ) : (
+        <>
+          {err && (
+            <div style={{ background: "#3a1212", color: "#ffb4b4", padding: 10, borderRadius: 6, marginBottom: 12, fontSize: 14 }}>
+              {err === "mismatch" && "Пароли не совпадают"}
+              {err === "weak_password" && "Пароль должен быть не короче 8 символов"}
+              {err === "invalid_or_expired" && "Ссылка недействительна или истекла"}
+            </div>
           )}
-        </div>
-      </body>
-    </html>
+          <form action={submit}>
+            <input type="hidden" name="token" value={token} />
+            <div className="form-row">
+              <label>Новый пароль (мин. 8 символов)</label>
+              <input type="password" name="password" required minLength={8} autoComplete="new-password" />
+            </div>
+            <div className="form-row">
+              <label>Повторите пароль</label>
+              <input type="password" name="password2" required minLength={8} autoComplete="new-password" />
+            </div>
+            <button className="btn" type="submit">Сохранить</button>
+          </form>
+        </>
+      )}
+    </div>
   );
 }
