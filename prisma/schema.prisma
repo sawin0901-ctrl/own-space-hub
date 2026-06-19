@@ -141,11 +141,13 @@ model AffiliateClick {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(ADMIN)
-  createdAt    DateTime @default(now())
+  id                      String    @id @default(cuid())
+  email                   String    @unique
+  passwordHash            String
+  role                    Role      @default(ADMIN)
+  passwordResetTokenHash  String?   @unique
+  passwordResetExpiresAt  DateTime?
+  createdAt               DateTime  @default(now())
 }
 
 // Состояние бесконечного импорта по ID (один источник = одна строка)
