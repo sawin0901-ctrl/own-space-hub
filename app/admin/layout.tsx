@@ -57,6 +57,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               </div>
               <button className="btn" type="submit">Войти</button>
             </form>
+            <p style={{ marginTop: 12, fontSize: 13 }}>
+              <Link href="/forgot-password" style={{ color: "var(--accent)" }}>Забыли пароль?</Link>
+            </p>
           </div>
         </body>
       </html>
