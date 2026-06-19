@@ -276,16 +276,8 @@ export default async function HomePage({
         </div>
       </section>
 
-      {popular.length === 0 && fresh.length === 0 && (
-        <section className="section">
-          <div className="container">
-            <p className="muted">
-              Каталог пока пуст. Зайдите в админку и запустите синхронизацию с площадкой
-              ({" "}<Link href="/admin" style={{ color: "var(--accent)" }}>/admin</Link>{" "}).
-            </p>
-          </div>
-        </section>
-      )}
+      {/* пустой каталог — баннер скрыт */}
+
     </>
   );
 }
