@@ -39,7 +39,7 @@ export async function requestPasswordReset(emailRaw: string) {
   const link = `${getBaseUrl()}/reset-password?token=${token}`;
   const html = `
     <div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
-      <h2>Сброс пароля GamePlaza</h2>
+      <h2>Сброс пароля Jetsale</h2>
       <p>Кто-то (надеемся, вы) запросил сброс пароля для <b>${email}</b>.</p>
       <p>Перейдите по ссылке, чтобы задать новый пароль. Ссылка действует ${TOKEN_TTL_MIN} минут:</p>
       <p><a href="${link}" style="display:inline-block;padding:10px 16px;background:#7c3aed;color:#fff;border-radius:6px;text-decoration:none">Сбросить пароль</a></p>
@@ -49,7 +49,7 @@ export async function requestPasswordReset(emailRaw: string) {
 
   const res = await sendMail({
     to: email,
-    subject: "Сброс пароля — GamePlaza",
+    subject: "Сброс пароля — Jetsale",
     html,
     text: `Сброс пароля: ${link} (действует ${TOKEN_TTL_MIN} минут)`,
   });

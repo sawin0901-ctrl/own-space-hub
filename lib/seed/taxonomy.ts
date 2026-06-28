@@ -1,4 +1,4 @@
-// Полная таксономия категорий и жанров GamePlaza.site.
+// Полная таксономия категорий и жанров Jetsale.
 // Идемпотентный сид: можно запускать многократно — добавит только отсутствующее.
 import { prisma } from "../prisma";
 import type { CategoryKind } from "@prisma/client";
