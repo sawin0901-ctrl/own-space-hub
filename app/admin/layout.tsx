@@ -79,7 +79,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <body>
         <div className="admin-shell">
           <aside className="admin-side">
-            <h2>GamePlaza Admin</h2>
+            <h2>Jetsale Admin</h2>
             <Link href="/admin">Дашборд</Link>
             <Link href="/admin/products">Товары</Link>
             <Link href="/admin/categories">Категории</Link>

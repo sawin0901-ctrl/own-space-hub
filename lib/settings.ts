@@ -24,7 +24,7 @@ const DEFAULTS: AppSettings = {
     plati: { enabled: true, urlTemplate: "{base}{sep}ai={affiliateId}" },
   },
   seo: {
-    siteTitle: "GamePlaza.site — каталог цифровых игр и ключей",
+    siteTitle: "Jetsale — каталог цифровых игр и ключей",
     siteDescription:
       "Каталог цифровых товаров: игры, ключи активации, подписки. Лучшие цены проверенных продавцов.",
     defaultOgImage: "",

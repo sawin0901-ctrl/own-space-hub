@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://gameplaza.site";
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://jetsale.online";
 
 export async function generateMetadata({
   params,
@@ -17,7 +17,7 @@ export async function generateMetadata({
     const { slug, locale } = await params;
     const c = await prisma.category.findUnique({ where: { slug } });
     if (!c) return {};
-    const title = c.seoTitle ?? `${c.name} — GamePlaza.site`;
+    const title = c.seoTitle ?? `${c.name} — Jetsale`;
     const description = c.seoDescription ?? `Каталог: ${c.name}. Цифровые ключи и аккаунты по лучшим ценам.`;
     const url = `${SITE}${locale === "ru" ? "" : `/${locale}`}/category/${c.slug}`;
     return {

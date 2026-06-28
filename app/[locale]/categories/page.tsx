@@ -7,10 +7,10 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Все категории и жанры — GamePlaza.site",
+    title: "Все категории и жанры — Jetsale",
     description: "Полный каталог категорий цифровых товаров и жанров игр: Steam, PlayStation, Xbox, Nintendo, PC, подписки, подарочные карты, ПО.",
     openGraph: {
-      title: "Все категории и жанры — GamePlaza.site",
+      title: "Все категории и жанры — Jetsale",
       description: "Полный каталог категорий и жанров игр.",
     },
   };
