@@ -1,4 +1,4 @@
--- Initial GamePlaza schema for Docker/VPS deployments.
+-- Initial Jetsale schema for Docker/VPS deployments.
 -- Safe for fresh databases; existing deployments keep using applied migrations history.
 
 DO $$ BEGIN CREATE TYPE "Source" AS ENUM ('DIGISELLER', 'PLATI'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
