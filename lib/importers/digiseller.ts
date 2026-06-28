@@ -38,7 +38,7 @@ export async function fetchDigisellerById(
   let res: Response;
   try {
     res = await fetch(url, {
-      headers: { Accept: "application/json", "User-Agent": "GamePlazaBot/1.0" },
+      headers: { Accept: "application/json", "User-Agent": "JetsaleBot/1.0" },
       signal: opts.signal,
     });
   } catch (e: any) {

@@ -28,7 +28,7 @@ export async function sendMail(opts: { to: string; subject: string; html: string
     console.warn("[mailer] SMTP не настроен — письмо не отправлено. To:", opts.to, "Subject:", opts.subject);
     return { ok: false, reason: "smtp_not_configured" as const };
   }
-  const from = process.env.SMTP_FROM || `GamePlaza <${process.env.SMTP_USER}>`;
+  const from = process.env.SMTP_FROM || `Jetsale <${process.env.SMTP_USER}>`;
   await t.sendMail({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text });
   return { ok: true as const };
 }
